@@ -1,11 +1,11 @@
 -- Create Olympic_Athlete_Biography Table
 CREATE TABLE Olympic_Athlete_Biography (
-    athlete_id INT PRIMARY KEY,
+    athlete_id VARCHAR(20) PRIMARY KEY,
     name VARCHAR(255),
     sex VARCHAR(10),
     born DATE,
-    height INT,
-    weight INT,
+    height VARCHAR(10),
+    weight VARCHAR(10),
     country VARCHAR(255),
     country_noc VARCHAR(3),
     description TEXT,
