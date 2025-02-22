@@ -58,10 +58,10 @@ CREATE TABLE Olympic_Games_Summary (
     city VARCHAR(255),
     country_flag_url VARCHAR(255),
     country_noc VARCHAR(3),
-    start_date DATE,
-    end_date DATE,
-    competition_date VARCHAR(255),
-    isHeld BOOLEAN
+    start_date VARCHAR(20),
+    end_date VARCHAR(20),
+    competition_date VARCHAR(50),
+    isHeld VARCHAR(50)
 );
 
 -- Create Olympic_Medal_Tally_History Table
