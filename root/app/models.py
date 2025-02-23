@@ -30,19 +30,19 @@ class CountryProfile(Base):
     country = Column(String(255))
 
 class EventResult(Base):
-    __tablename__ = "olympic_event_results"
+    __tablename__ = "olympic_athlete_event_details"
+    
     result_id = Column(Integer, primary_key=True)
-    event_title = Column(Text)
     edition = Column(String(255))
     edition_id = Column(Integer)
+    country_noc = Column(String(3))
     sport = Column(String(255))
-    sport_url = Column(String(255))
-    result_date = Column(String(255))
-    result_location = Column(Text)
-    result_participants = Column(Text)
-    result_format = Column(Text)
-    result_detail = Column(Text)
-    result_description = Column(Text)
+    event = Column(String(255))
+    athlete = Column(String(255))
+    athlete_id = Column(String(20))
+    pos = Column(String(50))
+    medal = Column(String(10))
+    isTeamSport = Column(Boolean)
 
 class GamesSummary(Base):
     __tablename__ = "olympic_games_summary"
