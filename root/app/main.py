@@ -206,34 +206,21 @@ def get_medal_comparison(
         results = query.order_by(models.MedalTally.year).all()
 
         # Format data for line chart
-        data_by_country = defaultdict(list)
+        chart_data = [
+            {
+                "xAxis": result.year,
+                "medals": result.total_medals
+            }
+            for result in results
+        ]
+
         years = sorted(set(r.year for r in results))
-
-        for result in results:
-            data_by_country[result.country].append({
-                'year': result.year,
-                'medals': result.total_medals
-            })
-
-        chart_data = {
-            "labels": years,
-            "datasets": [
-                {
-                    "label": country,
-                    "data": [next((d['medals'] for d in data if d['year'] == year), 0) 
-                            for year in years]
-                } for country, data in data_by_country.items()
-            ]
-        }
-
-        # Get available countries for dropdown
-        countries = db.query(models.MedalTally.country).distinct().order_by(models.MedalTally.country).all()
 
         return {
             "chart_data": chart_data,
             "chart_type": "line",
+            "country": country,
             "filters": {
-                "countries": [country[0] for country in countries],
                 "years": years
             }
         }
