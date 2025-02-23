@@ -2,8 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# MySQL connection URL
-DATABASE_URL = "mysql://root:<h1>AdminData</h1>@localhost:3306/olympic_backend"
+DATABASE_URL = "postgresql://postgres:admin123@localhost/olympic_db"
 
 engine = create_engine(DATABASE_URL)
 

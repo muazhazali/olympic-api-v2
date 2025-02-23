@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, Date, Text
-from .database import Base, engine
+from .database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -69,6 +69,3 @@ class MedalTally(Base):
     silver = Column(Integer)
     bronze = Column(Integer)
     total = Column(Integer)
-
-if __name__ == "__main__":
-    Base.metadata.create_all(bind=engine)
