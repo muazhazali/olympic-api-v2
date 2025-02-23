@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, distinct, case
 from . import models, schemas
 from .database import engine, get_db
 from typing import List, Optional, Dict
@@ -135,6 +135,64 @@ def get_gender_distribution(db: Session = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/top-athletes")
+def get_top_athletes(db: Session = Depends(get_db)):
+    try:
+        # Query to get athlete information and medal counts
+        query = db.query(
+            models.AthleteProfile.name,
+            models.AthleteProfile.country,
+            func.count(case([(models.EventResult.medal == 'Gold', 1)])).label('gold'),
+            func.count(case([(models.EventResult.medal == 'Silver', 1)])).label('silver'),
+            func.count(case([(models.EventResult.medal == 'Bronze', 1)])).label('bronze')
+        ).join(
+            models.EventResult,
+            models.AthleteProfile.athlete_id == models.EventResult.athlete_id  # Changed to match on athlete_id
+        ).group_by(
+            models.AthleteProfile.name,
+            models.AthleteProfile.country
+        ).having(
+            # Count only where medal is not null
+            func.count(models.EventResult.medal.isnot(None)) > 0
+        ).order_by(
+            desc('gold'),
+            desc('silver'),
+            desc('bronze')
+        ).limit(10)
+
+        results = query.all()
+
+        # Format data for bar chart
+        chart_data = [
+            {
+                "xAxis": result.name,
+                "gold": result.gold,
+                "silver": result.silver,
+                "bronze": result.bronze,
+                "total": result.gold + result.silver + result.bronze,
+                "country": result.country
+            } for result in results
+        ]
+
+        # Sort by total medals, then by gold, silver, bronze
+        chart_data.sort(key=lambda x: (x["total"], x["gold"], x["silver"], x["bronze"]), reverse=True)
+
+        return {
+            "data": chart_data,
+            "chart_type": "stacked-bar",
+            "title": "Top 10 Olympic Athletes by Medal Count",
+            "colors": {
+                "gold": "#FFD700",
+                "silver": "#C0C0C0",
+                "bronze": "#CD7F32"
+            }
+        }
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Debug print
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 
 # Overview APIs
