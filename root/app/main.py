@@ -192,8 +192,56 @@ def get_top_athletes(db: Session = Depends(get_db)):
         print(f"Error: {str(e)}")  # Debug print
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/gender-trend")
+def get_gender_trend(db: Session = Depends(get_db)):
+    try:
+        # Query to get gender counts by year
+        query = db.query(
+            models.GamesSummary.year,
+            models.AthleteProfile.sex,
+            func.count(distinct(models.AthleteProfile.athlete_id)).label('count')
+        ).join(
+            models.EventResult,
+            models.EventResult.edition_id == models.GamesSummary.edition_id
+        ).join(
+            models.AthleteProfile,
+            models.AthleteProfile.athlete_id == models.EventResult.athlete_id
+        ).group_by(
+            models.GamesSummary.year,
+            models.AthleteProfile.sex
+        ).order_by(
+            models.GamesSummary.year
+        )
 
+        results = query.all()
 
+        # Format data for line chart
+        year_data = {}
+        for result in results:
+            if result.sex:  # Skip if gender is None
+                year = result.year
+                if year not in year_data:
+                    year_data[year] = {"xAxis": str(year), "male": 0, "female": 0}
+                
+                gender_key = "male" if result.sex.lower() == "male" else "female"
+                year_data[year][gender_key] = result.count
+
+        # Convert to list and sort by year
+        chart_data = list(year_data.values())
+        chart_data.sort(key=lambda x: x["xAxis"])
+
+        return {
+            "data": chart_data,
+            "chart_type": "line",
+            "title": "Gender Distribution Trend Over Years",
+            "colors": {
+                "male": "#2196F3",   # Blue for male
+                "female": "#FF4081"  # Pink for female
+            }
+        }
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Debug print
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Overview APIs
 @app.get("/api/stats/total-athletes")
