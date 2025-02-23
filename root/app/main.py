@@ -120,7 +120,8 @@ def get_gender_distribution(db: Session = Depends(get_db)):
         chart_data = []
         for result in results:
             if result.sex:  # Skip if gender is None
-                gender = "male" if result.sex.lower() == 'm' else "female"
+                # Handle "Male" and "Female" values
+                gender = result.sex.lower()  # Convert to lowercase for consistency
                 percentage = round((result.count / total_athletes) * 100, 2)
                 chart_data.append({
                     "gender": gender,
