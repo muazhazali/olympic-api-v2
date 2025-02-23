@@ -154,3 +154,36 @@ def get_total_countries(db: Session = Depends(get_db)):
         return {"total_countries": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/stats/gender-distribution")
+def get_gender_distribution(db: Session = Depends(get_db)):
+    try:
+        # Query to get gender counts
+        results = db.query(
+            models.AthleteProfile.sex,
+            func.count(models.AthleteProfile.athlete_id).label('count')
+        ).group_by(
+            models.AthleteProfile.sex
+        ).all()
+
+        # Calculate total for percentages
+        total_athletes = sum(r.count for r in results)
+
+        # Format data for donut chart
+        chart_data = []
+        for result in results:
+            if result.sex:  # Skip if gender is None
+                gender = "male" if result.sex.lower() == 'm' else "female"
+                percentage = round((result.count / total_athletes) * 100, 2)
+                chart_data.append({
+                    "gender": gender,
+                    "athletes": result.count,
+                    "percentage": percentage
+                })
+
+        return {
+            "data": chart_data,
+            "total_athletes": total_athletes
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
