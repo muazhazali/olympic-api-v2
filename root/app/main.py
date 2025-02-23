@@ -60,19 +60,35 @@ def get_medal_ranking(
 @app.get("/api/medal-comparison")
 def get_medal_comparison(
     db: Session = Depends(get_db),
-    country: Optional[str] = Query(None, description="Filter by country"),
     start_year: Optional[int] = Query(None, description="Start year"),
     end_year: Optional[int] = Query(None, description="End year")
 ):
     try:
+        # First get the top 5 countries by total medals
+        top_countries = db.query(
+            models.MedalTally.country,
+            func.sum(models.MedalTally.total).label('total_medals')
+        ).group_by(
+            models.MedalTally.country
+        ).order_by(
+            desc('total_medals')
+        ).limit(5).all()
+
+        # Get the list of top 5 countries
+        top_country_list = [country.country for country in top_countries]
+
+        # Get medal counts by year for these countries
         query = db.query(
             models.MedalTally.year,
             models.MedalTally.country,
             func.sum(models.MedalTally.total).label('total_medals')
-        ).group_by(models.MedalTally.year, models.MedalTally.country)
+        ).filter(
+            models.MedalTally.country.in_(top_country_list)
+        ).group_by(
+            models.MedalTally.year,
+            models.MedalTally.country
+        )
 
-        if country:
-            query = query.filter(models.MedalTally.country == country)
         if start_year:
             query = query.filter(models.MedalTally.year >= start_year)
         if end_year:
@@ -81,22 +97,35 @@ def get_medal_comparison(
         results = query.order_by(models.MedalTally.year).all()
 
         # Format data for line chart
-        chart_data = [
-            {
-                "xAxis": result.year,
-                "medals": result.total_medals
-            }
-            for result in results
-        ]
+        year_data = {}
+        for result in results:
+            year = result.year
+            if year not in year_data:
+                year_data[year] = {
+                    "xAxis": str(year),
+                    **{country: 0 for country in top_country_list}  # Initialize all countries with 0
+                }
+            year_data[year][result.country] = result.total_medals
+
+        # Convert to list and sort by year
+        chart_data = list(year_data.values())
+        chart_data.sort(key=lambda x: x["xAxis"])
 
         years = sorted(set(r.year for r in results))
 
         return {
             "chart_data": chart_data,
             "chart_type": "line",
-            "country": country,
+            "countries": top_country_list,  # List of countries for legend
             "filters": {
                 "years": years
+            },
+            "colors": {  # Assign a unique color to each country
+                "United States": "#2196F3",  # Blue
+                "Soviet Union": "#4CAF50",   # Green
+                "Germany": "#FF4081",        # Pink
+                "Great Britain": "#FFC107",  # Amber
+                "France": "#9C27B0"         # Purple
             }
         }
     except Exception as e:
