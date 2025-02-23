@@ -13,7 +13,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Olympic Games API")
 
 # 1. Medal Ranking Endpoint
-@app.get("/medal-ranking")
+@app.get("/api/medal-ranking")
 def get_medal_ranking(
     db: Session = Depends(get_db),
     year: Optional[int] = Query(None, description="Filter by specific year"),
@@ -57,7 +57,7 @@ def get_medal_ranking(
         raise HTTPException(status_code=500, detail=str(e))
 
 # 2. Medal Comparison Endpoint
-@app.get("/medal-comparison")
+@app.get("/api/medal-comparison")
 def get_medal_comparison(
     db: Session = Depends(get_db),
     country: Optional[str] = Query(None, description="Filter by country"),
@@ -102,60 +102,7 @@ def get_medal_comparison(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/stats/total-athletes")
-def get_total_athletes(db: Session = Depends(get_db)):
-    try:
-        total = db.query(func.count(func.distinct(models.AthleteProfile.athlete_id))).scalar()
-        return {"total_athletes": total}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/stats/total-olympics")
-def get_total_olympics(db: Session = Depends(get_db)):
-    try:
-        total = db.query(func.count(func.distinct(models.GamesSummary.edition))).scalar()
-        return {"total_olympics": total}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/stats/total-medals")
-def get_total_medals(db: Session = Depends(get_db)):
-    try:
-        result = db.query(
-            func.sum(models.MedalTally.gold).label('gold'),
-            func.sum(models.MedalTally.silver).label('silver'),
-            func.sum(models.MedalTally.bronze).label('bronze')
-        ).first()
-        
-        total_medals = result.gold + result.silver + result.bronze
-        return {
-            "total_medals": total_medals,
-            "breakdown": {
-                "gold": result.gold,
-                "silver": result.silver,
-                "bronze": result.bronze
-            }
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/stats/total-sports")
-def get_total_sports(db: Session = Depends(get_db)):
-    try:
-        total = db.query(func.count(func.distinct(models.EventResult.sport))).scalar()
-        return {"total_sports": total}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/stats/total-countries")
-def get_total_countries(db: Session = Depends(get_db)):
-    try:
-        total = db.query(func.count(func.distinct(models.CountryProfile.noc))).scalar()
-        return {"total_countries": total}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/stats/gender-distribution")
+@app.get("/api/gender-distribution")
 def get_gender_distribution(db: Session = Depends(get_db)):
     try:
         # Query to get gender counts
@@ -187,3 +134,60 @@ def get_gender_distribution(db: Session = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Overview APIs
+@app.get("/api/stats/total-athletes")
+def get_total_athletes(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.AthleteProfile.athlete_id))).scalar()
+        return {"total_athletes": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats/total-olympics")
+def get_total_olympics(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.GamesSummary.edition))).scalar()
+        return {"total_olympics": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats/total-medals")
+def get_total_medals(db: Session = Depends(get_db)):
+    try:
+        result = db.query(
+            func.sum(models.MedalTally.gold).label('gold'),
+            func.sum(models.MedalTally.silver).label('silver'),
+            func.sum(models.MedalTally.bronze).label('bronze')
+        ).first()
+        
+        total_medals = result.gold + result.silver + result.bronze
+        return {
+            "total_medals": total_medals,
+            "breakdown": {
+                "gold": result.gold,
+                "silver": result.silver,
+                "bronze": result.bronze
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats/total-sports")
+def get_total_sports(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.EventResult.sport))).scalar()
+        return {"total_sports": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats/total-countries")
+def get_total_countries(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.CountryProfile.noc))).scalar()
+        return {"total_countries": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
