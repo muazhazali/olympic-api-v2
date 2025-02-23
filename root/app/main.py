@@ -101,3 +101,56 @@ def get_medal_comparison(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/stats/total-athletes")
+def get_total_athletes(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.AthleteProfile.athlete_id))).scalar()
+        return {"total_athletes": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/stats/total-olympics")
+def get_total_olympics(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.GamesSummary.edition))).scalar()
+        return {"total_olympics": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/stats/total-medals")
+def get_total_medals(db: Session = Depends(get_db)):
+    try:
+        result = db.query(
+            func.sum(models.MedalTally.gold).label('gold'),
+            func.sum(models.MedalTally.silver).label('silver'),
+            func.sum(models.MedalTally.bronze).label('bronze')
+        ).first()
+        
+        total_medals = result.gold + result.silver + result.bronze
+        return {
+            "total_medals": total_medals,
+            "breakdown": {
+                "gold": result.gold,
+                "silver": result.silver,
+                "bronze": result.bronze
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/stats/total-sports")
+def get_total_sports(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.EventResult.sport))).scalar()
+        return {"total_sports": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/stats/total-countries")
+def get_total_countries(db: Session = Depends(get_db)):
+    try:
+        total = db.query(func.count(func.distinct(models.CountryProfile.noc))).scalar()
+        return {"total_countries": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
