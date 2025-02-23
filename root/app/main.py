@@ -318,12 +318,4 @@ def get_total_sports(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/stats/total-countries")
-def get_total_countries(db: Session = Depends(get_db)):
-    try:
-        total = db.query(func.count(func.distinct(models.CountryProfile.noc))).scalar()
-        return {"total_countries": total}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
